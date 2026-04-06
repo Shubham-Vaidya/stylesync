@@ -1,27 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Root Variables ──────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --c-black:    #080808;
+  --c-deep:     #0f0f0f;
+  --c-surface:  #141414;
+  --c-surface2: #1c1c1c;
+  --c-border:   #252525;
+  --c-border2:  #333333;
+  --c-gold:     #C8A96E;
+  --c-gold-l:   #E8C99E;
+  --c-white:    #F0EDE8;
+  --c-muted:    #888888;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base Reset ──────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
 }
+html::-webkit-scrollbar       { width: 4px; }
+html::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb { background: #333; border-radius: 0; }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #080808;
+  color: #F0EDE8;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  cursor: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* ─── Grain Overlay ───────────────────────────── */
+body::before {
+  content: '';
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  width: 100%;
+  height: 100%;
 }
+
+/* ─── Selection ───────────────────────────────── */
+::selection {
+  background: rgba(200, 169, 110, 0.25);
+  color: #F0EDE8;
+}
+
+/* ─── Typography Utilities ────────────────────── */
+.font-display { font-family: 'Playfair Display', Georgia, serif; }
+.font-body    { font-family: 'DM Sans', system-ui, sans-serif; }
+.font-mono    { font-family: 'DM Mono', 'Fira Mono', monospace; }
+
+.text-display {
+  font-family: 'Playfair Display', serif;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.label-caps {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.label-sm {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ─── Glass Cards ─────────────────────────────── */
+.glass-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 2px;
+}
+
+.glass-panel {
+  background: rgba(255,255,255,0.02);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.glass-card-hover {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-card-hover:hover {
+  border-color: rgba(200,169,110,0.35);
+  box-shadow: 0 0 24px rgba(200,169,110,0.12);
+}
+
+/* ─── Buttons ─────────────────────────────────── */
+.btn-gold {
+  background: #C8A96E;
+  color: #080808;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 1px;
+  border: none;
+  cursor: none;
+  transition: background 0.25s ease, box-shadow 0.3s ease, transform 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn-gold:hover {
+  background: #E8C99E;
+  box-shadow: 0 8px 32px rgba(200,169,110,0.35);
+}
+.btn-gold:active { transform: scale(0.97); }
+.btn-gold:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #C8A96E;
+  border: 1px solid #C8A96E;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 1px;
+  cursor: none;
+  transition: background 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn-ghost:hover {
+  background: rgba(200,169,110,0.08);
+}
+
+/* ─── Inputs ──────────────────────────────────── */
+.input-base {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  color: #F0EDE8;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  padding: 1.2rem 0 0.5rem 0;
+  outline: none;
+  border-radius: 0;
+  transition: border-bottom-color 0.3s ease;
+}
+.input-base:focus { border-bottom-color: #C8A96E; }
+.input-base::placeholder { color: transparent; }
+
+/* ─── Shimmer ─────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(90deg, #141414 25%, #1c1c1c 50%, #141414 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ─── Scan line on result panel ───────────────── */
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,169,110,0.3), transparent);
+  animation: scan 3s linear infinite;
+  pointer-events: none;
+}
+
+/* ─── Marquee ─────────────────────────────────── */
+.marquee-track { display: flex; width: max-content; animation: marquee 28s linear infinite; }
+.marquee-track:hover { animation-play-state: paused; }
+
+/* ─── Custom cursor override for links ─────────── */
+a, button, [role="button"] { cursor: none; }
+
+/* ─── Tab indicator ───────────────────────────── */
+.nav-link-active { color: #C8A96E; }
+
+/* ─── Overflow clip parent (for GSAP text reveals) */
+.clip-parent { overflow: hidden; }
+
+/* ─── Dot pulse loader ────────────────────────── */
+.dot-1 { animation: dotPulse 1.2s ease-in-out 0s infinite; }
+.dot-2 { animation: dotPulse 1.2s ease-in-out 0.2s infinite; }
+.dot-3 { animation: dotPulse 1.2s ease-in-out 0.4s infinite; }
+
+/* ─── Result image ────────────────────────────── */
+.result-image {
+  animation: resultReveal 0.7s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+@keyframes resultReveal {
+  from { opacity:0; transform: scale(0.96) translateY(16px); }
+  to   { opacity:1; transform: scale(1)    translateY(0);    }
+}
+
+/* ─── Scrollbar for panels ────────────────────── */
+.thin-scroll::-webkit-scrollbar { width: 2px; }
+.thin-scroll::-webkit-scrollbar-track { background: transparent; }
+.thin-scroll::-webkit-scrollbar-thumb { background: #333; }
