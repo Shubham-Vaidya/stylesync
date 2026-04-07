@@ -127,7 +127,7 @@ function CategoryAccordion({ category, items, selectedGarment, onSelect, default
             <div style={{ padding: '10px 8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {items.map((item, i) => (
                 <GarmentCard key={item.id} item={item} index={i}
-                  isSelected={selectedGarment?.id === item.id} onSelect={onSelect} />
+                  isSelected={selectedGarment === item.filename} onSelect={(item) => onSelect(item.filename)} />
               ))}
             </div>
           </motion.div>
@@ -151,7 +151,9 @@ function UploadZone({ personImage, onUpload, onClear }) {
     if (!file?.type.startsWith('image/')) return;
     if (file.size > 10 * 1024 * 1024) return;
     const reader = new FileReader();
-    reader.onload = e => onUpload(e.target.result);
+    reader.onload = (e) => {
+      onUpload(e.target.result); // this is "data:image/jpeg;base64,..." — keep full data URI
+    };
     reader.readAsDataURL(file);
   }, [onUpload]);
 
@@ -236,10 +238,12 @@ function UploadZone({ personImage, onUpload, onClear }) {
 function ResultZone({ isProcessing, resultImage, error, selectedGarment }) {
   function download() {
     if (!resultImage) return;
-    const a = document.createElement('a');
-    a.href = resultImage.startsWith('data:') ? resultImage : `data:image/jpeg;base64,${resultImage}`;
-    a.download = `stylesync-tryon-${Date.now()}.jpg`;
-    a.click();
+    const link = document.createElement('a');
+    link.href = resultImage; // base64 data URI works directly as href
+    link.download = 'stylesync-tryon-result.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   return (
@@ -266,11 +270,15 @@ function ResultZone({ isProcessing, resultImage, error, selectedGarment }) {
 
           {!isProcessing && resultImage && (
             <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <img
-                src={resultImage.startsWith('data:') ? resultImage : `data:image/jpeg;base64,${resultImage}`}
+              <img 
+                src={resultImage}
                 alt="Try-on result"
-                className="result-image"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain',
+                  display: 'block'
+                }}
               />
             </motion.div>
           )}
@@ -338,19 +346,18 @@ function TryOnContent() {
 
   // Fetch garments from API
   useEffect(() => {
-    async function fetchGarments() {
-      try {
-        const res = await fetch('http://localhost:5000/garments');
-        const data = await res.json();
-        const items = (data.garments || []).map((filename, i) => ({
-          id: `g_${i}`, filename, name: filename.replace(/\.\w+$/, '').replace(/[_-]/g, ' '),
-          category: categorize(filename), emoji: '👔', price: '',
-        }));
-        if (items.length > 0) { setGarments(items); return; }
-      } catch { /* fall through */ }
-      setGarments(FALLBACK_GARMENTS);
-    }
-    fetchGarments();
+    fetch('http://localhost:5000/garments')
+      .then(r => r.json())
+      .then(data => {
+        if (data.garments) {
+          setGarments(data.garments); // array of filename strings
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load garments:', err);
+        // Fallback: hardcode some filenames so panel is not empty
+        setGarments(['shirt.png', 'hoodie.png', 'jeans.png']);
+      });
   }, []);
 
   // GSAP entrance
@@ -371,7 +378,7 @@ function TryOnContent() {
   const [{ isOver }, rightDrop] = useDrop(() => ({
     accept: 'GARMENT',
     drop: (item) => {
-      setSelectedGarment(item);
+      setSelectedGarment(item.filename);
       toast.info(`${item.name} selected`);
     },
     collect: monitor => ({ isOver: monitor.isOver() }),
@@ -379,12 +386,21 @@ function TryOnContent() {
 
   // Filtered garments by category
   const grouped = garments.reduce((acc, g) => {
-    const cat = g.category;
+    const isStr = typeof g === 'string';
+    const filename = isStr ? g : g.filename;
+    const name = isStr ? filename.replace(/\.\w+$/, '').replace(/[_-]/g, ' ') : g.name;
+    const cat = isStr ? categorize(filename) : g.category;
+    
     if (!acc[cat]) acc[cat] = [];
     const matchQ = !garmentQuery ||
-      g.name.toLowerCase().includes(garmentQuery.toLowerCase()) ||
-      g.filename.toLowerCase().includes(garmentQuery.toLowerCase());
-    if (matchQ) acc[cat].push(g);
+      name.toLowerCase().includes(garmentQuery.toLowerCase()) ||
+      filename.toLowerCase().includes(garmentQuery.toLowerCase());
+      
+    if (matchQ) {
+      acc[cat].push({
+        id: filename, filename, name, category: cat, emoji: isStr ? '👔' : g.emoji, price: isStr ? '' : g.price
+      });
+    }
     return acc;
   }, {});
 
@@ -421,7 +437,7 @@ function TryOnContent() {
           )}
           <div style={{ textAlign: 'right' }}>
             <p className="label-sm" style={{ color: selectedGarment ? '#C8A96E' : '#444' }}>
-              {selectedGarment ? `✓ ${selectedGarment.name}` : 'NO GARMENT'}
+              {selectedGarment ? `✓ ${garments.find(g => g.filename === selectedGarment)?.name || selectedGarment}` : 'NO GARMENT'}
             </p>
             <p className="label-sm" style={{ color: personImage ? '#C8A96E' : '#444' }}>
               {personImage ? '✓ PHOTO READY' : 'NO PHOTO'}
@@ -462,15 +478,15 @@ function TryOnContent() {
               >
                 <div style={{ padding: '10px 14px', display: 'flex', gap: '10px', alignItems: 'center',
                   background: 'rgba(200,169,110,0.04)' }}>
-                  <span style={{ fontSize: '1.5rem' }}>{selectedGarment.emoji}</span>
+                  <span style={{ fontSize: '1.5rem' }}>{garments.find(g => g.filename === selectedGarment)?.emoji || '👔'}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className="label-sm" style={{ color: '#888' }}>{selectedGarment.category}</p>
+                    <p className="label-sm" style={{ color: '#888' }}>{garments.find(g => g.filename === selectedGarment)?.category || 'Other'}</p>
                     <p className="font-sans text-xs mt-0.5" style={{ color: '#F0EDE8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {selectedGarment.name}
+                      {garments.find(g => g.filename === selectedGarment)?.name || selectedGarment}
                     </p>
-                    {selectedGarment.price && <p className="label-caps" style={{ color: '#C8A96E', fontSize: '0.55rem', marginTop: '2px' }}>{selectedGarment.price}</p>}
+                    {garments.find(g => g.filename === selectedGarment)?.price && <p className="label-caps" style={{ color: '#C8A96E', fontSize: '0.55rem', marginTop: '2px' }}>{garments.find(g => g.filename === selectedGarment)?.price}</p>}
                   </div>
-                  <button onClick={() => setSelectedGarment(null)} style={{ color: '#555', background: 'none', border: 'none', cursor: 'none' }}>
+                  <button onClick={() => setSelectedGarment(null)} style={{ color: '#555', background: 'none', border: 'none', cursor: 'pointer' }}>
                     <X size={12} />
                   </button>
                 </div>

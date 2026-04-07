@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Package, TrendingUp, DollarSign, UploadCloud } from 'lucide-react';
 import { useToast } from '@/components/Toast';
@@ -39,7 +39,20 @@ function FloatingInput({ id, label, type = 'text', value, onChange }) {
   );
 }
 
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+
 export default function VendorPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  useEffect(() => {
+    const localUser = typeof window !== 'undefined' && localStorage.getItem('ss_user');
+    if (!user && !localUser) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
   const toast = useToast();
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [drawerOpen, setDrawerOpen] = useState(false);

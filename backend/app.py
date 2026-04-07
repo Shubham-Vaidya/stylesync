@@ -20,7 +20,7 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "*"])
 
 # ── Config ────────────────────────────────────────────────────────────────
-BASE_DIR = r"d:\Hackathon\Test\stylesync\backend"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 GARMENTS_DIR = os.path.join(BASE_DIR, "garments")
 os.makedirs(GARMENTS_DIR, exist_ok=True)
 print(f"[startup] BASE_DIR     = {BASE_DIR}")
@@ -33,6 +33,10 @@ print(f"[startup] GARMENTS_DIR = {GARMENTS_DIR}")
 @app.route("/", methods=["GET"])
 def health():
     return jsonify({"status": "ok", "service": "StyleSync AI Backend", "version": "1.0.0"})
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
 
 
 # ══════════════════════════════════════════════════════════════════════════════

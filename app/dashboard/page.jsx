@@ -79,8 +79,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Allow hackathon bypass
-    const token = typeof window !== 'undefined' && localStorage.getItem('ss_token');
-    if (!user && !token) {
+    const localUser = typeof window !== 'undefined' && localStorage.getItem('ss_user');
+    if (!user && !localUser) {
       router.push('/login');
     }
   }, [user, router]);

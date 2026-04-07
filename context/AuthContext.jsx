@@ -12,6 +12,7 @@ const MOCK_USERS = {
 };
 
 export function AuthProvider({ children }) {
+  const router = useRouter();
   const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -78,10 +79,11 @@ export function AuthProvider({ children }) {
     setUser(null);
     localStorage.removeItem('ss_user');
     localStorage.removeItem('ss_token');
-  }, []);
+    router.push('/login');
+  }, [router]);
 
   const isAuthenticated = useCallback(() => {
-    return !!user || !!localStorage.getItem('ss_token');
+    return !!user || !!localStorage.getItem('ss_user');
   }, [user]);
 
   return (
@@ -116,38 +118,47 @@ export function TryOnProvider({ children }) {
 
   const generateTryOn = useCallback(async () => {
     if (!personImage || !selectedGarment) return;
+    
     setIsProcessing(true);
     setResultImage(null);
     setError(null);
-
+    
     try {
-      const res = await fetch('http://localhost:5000/tryon', {
+      const response = await fetch('http://localhost:5000/tryon', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           person_image: personImage,
-          garment:      selectedGarment.filename,
-        }),
+          garment: selectedGarment
+        })
       });
-
-      const text = await res.text();
-      console.log('[TryOn] raw response:', text.slice(0, 200));
-
-      let data;
-      try { data = JSON.parse(text); } catch {
-        throw new Error(`Invalid JSON from server: ${text.slice(0, 80)}`);
+      
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Server error ${response.status}: ${errText}`);
       }
-
+      
+      const data = await response.json();
+      
+      console.log('API response keys:', Object.keys(data));
+      
       if (data.result_image) {
         setResultImage(data.result_image);
+      } else if (data.error) {
+        throw new Error(data.error);
       } else {
-        throw new Error(data.error || 'No result_image in response');
+        throw new Error('No result_image in response. Got: ' + JSON.stringify(data));
       }
+      
     } catch (err) {
-      console.error('[TryOn] error:', err);
-      // Hackathon fallback
-      setResultImage('/demo-result.jpg');
-      setError(null);
+      console.error('TryOn error:', err);
+      if (err.message.includes('fetch') || err.message.includes('Failed to fetch')) {
+        setError('Cannot reach Flask server. Make sure python app.py is running on port 5000.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setIsProcessing(false);
     }

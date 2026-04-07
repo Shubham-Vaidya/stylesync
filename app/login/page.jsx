@@ -67,9 +67,9 @@ function FloatingInput({ id, label, type = 'text', value, onChange, autoComplete
 /* ─── Role Pill ─────────────────────────────────── */
 function RolePill({ role, label, active, onClick }) {
   return (
-    <motion.button
+    <button
+      type="button"
       onClick={() => onClick(role)}
-      whileTap={{ scale: 0.97 }}
       style={{
         padding: '0.5rem 1.4rem',
         fontFamily: '"DM Mono", monospace',
@@ -82,10 +82,11 @@ function RolePill({ role, label, active, onClick }) {
         borderRadius: '1px',
         transition: 'all 0.2s ease',
         flex: 1,
+        cursor: 'pointer',
       }}
     >
       {label}
-    </motion.button>
+    </button>
   );
 }
 
@@ -100,17 +101,14 @@ export default function LoginPage() {
   const [role,        setRole]        = useState('user');
   const [loading,     setLoading]     = useState(false);
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
-    if (!email || !password) { toast.error('Please fill in all fields'); return; }
-    setLoading(true);
-    const result = await login(email, password);
-    setLoading(false);
-    if (result.ok) {
-      toast.success('Welcome back!');
-      router.push('/dashboard');
-    } else {
-      toast.error(result.error || 'Login failed');
+    if (role === 'user') {
+      localStorage.setItem('ss_user', JSON.stringify({ role: 'user', name: 'Demo User', email: 'demo@stylesync.ai' }));
+      window.location.href = '/dashboard';
+    } else if (role === 'vendor') {
+      localStorage.setItem('ss_user', JSON.stringify({ role: 'vendor', name: 'Demo Vendor', email: 'vendor@stylesync.ai' }));
+      window.location.href = '/vendor';
     }
   }
 
@@ -144,6 +142,7 @@ export default function LoginPage() {
           borderRadius: '2px',
           padding: '3rem',
           boxShadow: '0 0 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04)',
+          pointerEvents: 'auto',
         }}
       >
         {/* Header */}

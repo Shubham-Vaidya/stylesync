@@ -400,7 +400,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <span className="font-display italic" style={{ color: '#C8A96E', fontSize: '1rem' }}>StyleSync</span>
           <div style={{ display: 'flex', gap: '24px' }}>
-            {['Catalog', 'TryOn', 'Discover', 'Vendors'].map(l => (
+            {['Catalog', 'TryOn', 'Vendor'].map(l => (
               <Link key={l} href={`/${l.toLowerCase()}`} className="label-caps hover:text-gold transition-colors" style={{ color: '#555' }}>{l}</Link>
             ))}
           </div>
